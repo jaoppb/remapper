@@ -7,6 +7,33 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("jaoppb");
 MODULE_DESCRIPTION("A simple input remapper");
 
+#define MAX_PATH_LENGTH 1024
+#define MAX_DEVICES 100
+
+typedef __u32 keycode;
+
+static int device_names_count = 0;
+static char *device_names[MAX_PATH_LENGTH];
+
+static int device_tables_count = 0;
+static ulong device_tables[MAX_DEVICES];
+
+module_param_array(device_names, charp, &device_names_count, 0);
+MODULE_PARM_DESC(device_names, "Path to the device to be remapped");
+
+module_param_array(device_tables, ulong, &device_tables_count, 0);
+MODULE_PARM_DESC(device_tables, "Table of key mappings");
+
+typedef struct {
+    keycode from;
+    keycode to;
+} mapped_key;
+
+struct mapped_device {
+    struct input_dev *dev;
+    mapped_key *mapped_keys;
+};
+
 static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
     pr_info("Device connected\n");
     return 0;
@@ -31,6 +58,21 @@ static struct input_handler input_handler = {
 static int __init remap_init(void)
 {
     int error;
+
+    if (device_names_count == 0) {
+        pr_err("No target devices specified\n");
+        return -EINVAL;
+    }
+
+    if (device_tables_count == 0) {
+        pr_err("No device tables specified\n");
+        return -EINVAL;
+    }
+
+    if (device_names_count != device_tables_count) {
+        pr_err("Number of target devices and device tables must match\n");
+        return -EINVAL;
+    }
 
     error = input_register_handler(&input_handler);
     if (error) {
