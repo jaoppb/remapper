@@ -3,8 +3,17 @@
 #include <linux/input.h>
 #include <linux/printk.h>
 
-static void handle_event(struct input_handle *handle, unsigned int type, unsigned int code, int value) {
-    pr_info("Event: type=%d, code=%d, value=%d\n", type, code, value);
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("jaoppb");
+MODULE_DESCRIPTION("A simple input remapper");
+
+static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
+    pr_info("Device connected\n");
+    return 0;
+}
+
+static void disconnect_device(struct input_handle *handle) {
+    pr_info("Device disconnected\n");
 }
 
 static const struct input_device_id device_ids[] = {
@@ -13,7 +22,8 @@ static const struct input_device_id device_ids[] = {
 };
 
 static struct input_handler input_handler = {
-    .event = handle_event,
+    .connect = connect_device,
+    .disconnect = disconnect_device,
     .name = "input_handler",
     .id_table = device_ids,
 };
@@ -41,7 +51,3 @@ static void __exit remap_exit(void)
 
 module_init(remap_init);
 module_exit(remap_exit);
-
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("jaoppb");
-MODULE_DESCRIPTION("A simple input remapper");
