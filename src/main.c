@@ -35,13 +35,13 @@ struct mapped_device {
 };
 
 static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
-    pr_info("Device connected\n");
+    pr_info("Device %s connected\n", dev->name);
     return 0;
 }
 
 static void disconnect_device(struct input_handle *handle) {
     input_unregister_handle(handle);
-    pr_info("Device disconnected\n");
+    pr_info("Device %s disconnected\n", handle->dev->name);
 }
 
 static bool filter_device(struct input_handler *handler, struct input_dev *dev) {
