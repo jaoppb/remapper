@@ -40,6 +40,7 @@ static int connect_device(struct input_handler *handler, struct input_dev *dev, 
 }
 
 static void disconnect_device(struct input_handle *handle) {
+    input_unregister_handle(handle);
     pr_info("Device disconnected\n");
 }
 
