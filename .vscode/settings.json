@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "module.h": "c",
-        "init.h": "c",
-        "*.tcc": "c"
-    }
-}
