@@ -34,6 +34,21 @@ struct mapped_device {
     mapped_key *mapped_keys;
 };
 
+static mapped_key parse_ulong(ulong value) {
+    mapped_key key;
+    key.from = (value >> 32) & 0xFFFFFFFF;
+    key.to = value & 0xFFFFFFFF;
+    return key;
+}
+
+static mapped_key* parse_table(ulong *table, int count) {
+    mapped_key *mapped_keys = kmalloc(count * sizeof(mapped_key), GFP_KERNEL);
+    for (int i = 0; i < count; i++) {
+        mapped_keys[i] = parse_ulong(table[i]);
+    }
+    return mapped_keys;
+}
+
 static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
     pr_info("Device %s connected\n", dev->name);
     return 0;
