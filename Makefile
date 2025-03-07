@@ -1,14 +1,30 @@
-obj-m += remapper.o
-remapper-y = main.c
- 
-PWD := $(CURDIR)
-BUILD_DIR = $(PWD)/build
+ROOT_DIR = $(CURDIR)
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+SOURCE_DIR = src
+OUTPUT_DIR = build
+TARGET = remapper
 
-all: $(BUILD_DIR)
-	$(MAKE) -C /lib/modules/$(uname -r)/build M=$(PWD) modules 
+SOURCES = $(SOURCE_DIR)/main.c
+
+# Depends on bin/include bin/*.c and bin/Kbuild
+all: $(OUTPUT_DIR)/ $(subst $(SOURCE_DIR),$(OUTPUT_DIR),$(SOURCES)) $(OUTPUT_DIR)/Kbuild
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(ROOT_DIR)/$(OUTPUT_DIR) modules
+
+install: all
+	cd $(ROOT_DIR)/$(OUTPUT_DIR) && \
+	sudo insmod $(TARGET).ko
+
+# Create a symlink from src to bin
+$(OUTPUT_DIR)/%: $(SOURCE_DIR)/%
+	cp $(ROOT_DIR)/$< $@
+
+# Create any needed folder
+%/:
+	mkdir -p $@
+
+# Generate a Makefile with the needed obj-m and mymodule-objs set
+$(OUTPUT_DIR)/Kbuild:
+	printf "obj-m += $(TARGET).o\n$(TARGET)-y := $(subst $(TARGET).o,, $(subst .c,.o,$(subst $(SOURCE_DIR)/,,$(SOURCES))))" > $@
 
 clean:
-	$(MAKE) -C /lib/modules/$(uname -r)/build M=$(PWD) clean
+	rm -rf $(OUTPUT_DIR)
