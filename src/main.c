@@ -43,6 +43,23 @@ static void disconnect_device(struct input_handle *handle) {
     pr_info("Device disconnected\n");
 }
 
+static bool filter_device(struct input_handler *handler, struct input_dev *dev) {
+    if (!(dev->evbit[0] & BIT(EV_KEY))) {
+        pr_info("Device %s does not support key events\n", dev->name);
+        return false;
+    }
+
+    for (int i = 0; i < device_names_count; i++) {
+        if (strcmp(dev->name, device_names[i]) == 0) {
+            pr_info("Device %s matches\n", dev->name);
+            return true;
+        }
+    }
+
+    pr_info("Device %s not found in target devices\n", dev->name);
+    return false;
+}
+
 static const struct input_device_id device_ids[] = {
     { .driver_info = 13 },
     {}
@@ -50,6 +67,7 @@ static const struct input_device_id device_ids[] = {
 
 static struct input_handler input_handler = {
     .connect = connect_device,
+    .match = filter_device,
     .disconnect = disconnect_device,
     .name = "input_handler",
     .id_table = device_ids,
