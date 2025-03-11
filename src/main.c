@@ -16,12 +16,12 @@ static int device_names_count = 0;
 static char *device_names[MAX_PATH_LENGTH];
 
 static int device_tables_count = 0;
-static ulong device_tables[MAX_DEVICES];
+static char* device_tables[MAX_DEVICES];
 
 module_param_array(device_names, charp, &device_names_count, 0);
 MODULE_PARM_DESC(device_names, "Path to the device to be remapped");
 
-module_param_array(device_tables, ulong, &device_tables_count, 0);
+module_param_array(device_tables, charp, &device_tables_count, 0);
 MODULE_PARM_DESC(device_tables, "Table of key mappings");
 
 typedef struct {
@@ -34,37 +34,51 @@ struct mapped_device {
     mapped_key *mapped_keys;
 };
 
-static int parse_remap(mapped_key** key, char *from, ulong to) {
-    int len = strlen(from);
+static int parse_remap(mapped_key** key, char *from, keycode to) {
+    char* each = NULL;
+    __u8* result = kcalloc(32, sizeof(__u8), GFP_KERNEL);
 
-    if (len > 32) {
-        pr_err("Scancode too long\n");
+    if (result == NULL) {
+        pr_err("Failed to allocate memory for key\n");
         return -1;
     }
 
-    key[0]->from = kcalloc(len, sizeof(__u8), GFP_KERNEL);
+    int size = 0;
+    while ((each = strsep(&from, ' ')) != NULL) {
+        if (size >= 32) {
+            pr_err("Key too long\n");
+            return -1;
+        }
+
+        result[size] = strtol(each, NULL, 16);
+
+        size++;
+    }
+
+    key[0]->from = kcalloc(size, sizeof(__u8), GFP_KERNEL);
     if (key[0]->from == NULL) {
         pr_err("Failed to allocate memory for key\n");
         return -1;
     }
 
-    memcpy(key[0]->from, from, len);
+    memcpy(key[0]->from, result, size);
+    kfree(result);
 
-    key[0]->to = to & 0xFFFFFFFF;
+    key[0]->to = to;
     return 0;
 }
 
-static int parse_table(mapped_key** mapped_keys, char** from_table, ulong *to_table, int count) {
+static int parse_table(mapped_key** mapped_keys, char* table, int count) {
     mapped_keys[0] = kcalloc(count, sizeof(mapped_key), GFP_KERNEL);
     for (int i = 0; i < count; i++) {
-        if(parse_remap(&mapped_keys[0][i], from_table[i], to_table[i]) < 0) {
+        if(parse_remap(&mapped_keys[0][i], strsep(table, ';'), table[0]) < 0) {
             return -1;
         }
     }
     return 0;
 }
 
-static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
+static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {   
     pr_info("Device %s connected\n", dev->name);
     return 0;
 }
