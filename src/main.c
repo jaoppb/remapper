@@ -34,7 +34,7 @@ struct mapped_device {
     mapped_key *mapped_keys;
 };
 
-static int parse_remap(mapped_key** key, char *from, keycode to) {
+static int parse_remap(mapped_key* key, char *from, keycode to) {
     char* each = NULL;
     __u8* result = kcalloc(32, sizeof(__u8), GFP_KERNEL);
 
@@ -44,34 +44,33 @@ static int parse_remap(mapped_key** key, char *from, keycode to) {
     }
 
     int size = 0;
-    while ((each = strsep(&from, ' ')) != NULL) {
+    while ((each = strsep(&from, " ")) != NULL) {
         if (size >= 32) {
             pr_err("Key too long\n");
             return -1;
         }
 
-        result[size] = strtol(each, NULL, 16);
+        kstrtou8(each, 16, &result[size]);
 
         size++;
     }
 
-    key[0]->from = kcalloc(size, sizeof(__u8), GFP_KERNEL);
-    if (key[0]->from == NULL) {
+    key->from = kcalloc(size, sizeof(__u8), GFP_KERNEL);
+    if (key->from == NULL) {
         pr_err("Failed to allocate memory for key\n");
         return -1;
     }
 
-    memcpy(key[0]->from, result, size);
+    memcpy(key->from, result, size);
     kfree(result);
 
-    key[0]->to = to;
+    key->to = to;
     return 0;
 }
 
 static int parse_table(mapped_key** mapped_keys, char* table, int count) {
-    mapped_keys[0] = kcalloc(count, sizeof(mapped_key), GFP_KERNEL);
     for (int i = 0; i < count; i++) {
-        if(parse_remap(&mapped_keys[0][i], strsep(table, ';'), table[0]) < 0) {
+        if(parse_remap(mapped_keys[i], strsep(&table, ";"), table[0]) < 0) {
             return -1;
         }
     }
