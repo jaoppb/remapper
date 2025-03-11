@@ -25,7 +25,7 @@ module_param_array(device_tables, ulong, &device_tables_count, 0);
 MODULE_PARM_DESC(device_tables, "Table of key mappings");
 
 typedef struct {
-    keycode from;
+    __u8* from;
     keycode to;
 } mapped_key;
 
@@ -34,19 +34,34 @@ struct mapped_device {
     mapped_key *mapped_keys;
 };
 
-static mapped_key parse_ulong(ulong value) {
-    mapped_key key;
-    key.from = (value >> 32) & 0xFFFFFFFF;
-    key.to = value & 0xFFFFFFFF;
-    return key;
+static int parse_remap(mapped_key** key, char *from, ulong to) {
+    int len = strlen(from);
+
+    if (len > 32) {
+        pr_err("Scancode too long\n");
+        return -1;
+    }
+
+    key[0]->from = kcalloc(len, sizeof(__u8), GFP_KERNEL);
+    if (key[0]->from == NULL) {
+        pr_err("Failed to allocate memory for key\n");
+        return -1;
+    }
+
+    memcpy(key[0]->from, from, len);
+
+    key[0]->to = to & 0xFFFFFFFF;
+    return 0;
 }
 
-static mapped_key* parse_table(ulong *table, int count) {
-    mapped_key *mapped_keys = kmalloc(count * sizeof(mapped_key), GFP_KERNEL);
+static int parse_table(mapped_key** mapped_keys, char** from_table, ulong *to_table, int count) {
+    mapped_keys[0] = kcalloc(count, sizeof(mapped_key), GFP_KERNEL);
     for (int i = 0; i < count; i++) {
-        mapped_keys[i] = parse_ulong(table[i]);
+        if(parse_remap(&mapped_keys[0][i], from_table[i], to_table[i]) < 0) {
+            return -1;
+        }
     }
-    return mapped_keys;
+    return 0;
 }
 
 static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
