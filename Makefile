@@ -12,7 +12,7 @@ all: $(OUTPUT_DIR)/ $(subst $(SOURCE_DIR),$(OUTPUT_DIR),$(SOURCES)) $(OUTPUT_DIR
 
 install: all
 	cd $(ROOT_DIR)/$(OUTPUT_DIR) && \
-	sudo insmod $(TARGET).ko device_name="AT Translated Set 2 keyboard"
+	sudo insmod $(TARGET).ko device_name="AT Translated Set 2 keyboard" key_table="0x25;0"
 
 remove:
 	sudo rmmod $(TARGET)
