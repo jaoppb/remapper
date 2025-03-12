@@ -26,17 +26,24 @@ MODULE_PARM_DESC(key_table, "Table of key mappings");
 // Key remap
 
 struct key_remap {
+    bool mapped;
+    __u32 old;
     __u8 *from;
     size_t from_size;
-    __u8 to;
+    __u32 to;
 };
 
 // Globals
 
 static int connected_devices = 0;
-static struct key_remap key_table_parsed[MAX_REMAPS];
+static struct key_remap key_table_parsed[MAX_REMAPS] = {
+    0,
+};
+static struct input_dev *device = NULL;
 
-static int parse_remap(struct key_remap *remap, char *from, __u8 to) {
+// Remap methods
+
+static int parse_remap(struct key_remap *remap, char *from, __u32 to) {
     char *each = NULL;
     __u8 *result = kcalloc(32, sizeof(__u8), GFP_KERNEL);
 
@@ -92,6 +99,26 @@ static int parse_remaps(struct key_remap *remaps, char **table, int count) {
     return 0;
 }
 
+// Remap Device methods
+
+static int remap_device_key(struct input_dev *dev, struct key_remap *remap) {
+    struct input_keymap_entry entry = {
+        .keycode = remap->to,
+        .len = remap->from_size,
+    };
+    memcpy(entry.scancode, remap->from, remap->from_size);
+
+    if (dev->setkeycode(dev, &entry, &remap->old) < 0) {
+        pr_err("Failed to remap key\n");
+        return -1;
+    }
+
+    pr_info("Key %d remapped to %d\n", remap->old, remap->to);
+
+    remap->mapped = true;
+    return 0;
+}
+
 // Input Handler methods
 
 static bool filter_device(struct input_handler *handler, struct input_dev *dev) {
@@ -99,8 +126,16 @@ static bool filter_device(struct input_handler *handler, struct input_dev *dev) 
 }
 
 static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
+    for (int i = 0; i < key_table_count; i++) {
+        if (remap_device_key(dev, &key_table_parsed[i]) < 0) {
+            pr_err("Failed to remap device key\n");
+            return -1;
+        }
+    }
+
     pr_info("Device %s connected\n", dev->name);
 
+    device = dev;
     connected_devices++;
     return 0;
 }
@@ -128,6 +163,13 @@ static int __init remap_init(void) {
         return -1;
     }
 
+    if (parse_remaps(key_table_parsed, key_table, key_table_count) < 0) {
+        pr_err("Failed to parse key tables\n");
+        return -1;
+    }
+
+    pr_info("Key tables parsed\n");
+
     if (input_register_handler(&input_handler) < 0) {
         pr_err("Failed to register input handler\n");
         return -1;
@@ -138,28 +180,29 @@ static int __init remap_init(void) {
         return -1;
     }
 
-    pr_info("Input handler registered\n");
-
-    if (parse_remaps(key_table_parsed, key_table, key_table_count) < 0) {
-        pr_err("Failed to parse key tables\n");
+    if (connected_devices > 1) {
+        pr_err("This module can only remap one device\n");
         return -1;
     }
 
-    pr_info("Key tables parsed\n");
-
-    pr_info("Key tables:\n");
-    for (int i = 0; i < key_table_count; i++) {
-        pr_info("From: ");
-        for (int j = 0; j < key_table_parsed[i].from_size; j++) {
-            pr_info("%02d ", key_table_parsed[i].from[j]);
-        }
-        pr_info("To: %02d\n", key_table_parsed[i].to);
-    }
+    pr_info("Input handler registered\n");
 
     return 0;
 }
 
 static void __exit remap_exit(void) {
+    if(device != NULL)  {
+        for (int i = 0; i < key_table_count; i++) {
+            if (!key_table_parsed[i].mapped) continue;
+
+            __u8 aux = key_table_parsed[i].to;
+            key_table_parsed[i].to = key_table_parsed[i].old;
+            remap_device_key(device, &key_table_parsed[i]);
+            key_table_parsed[i].to = aux;
+            key_table_parsed[i].mapped = false;
+        }
+    }
+
     input_unregister_handler(&input_handler);
     pr_info("Input handler unregistered\n");
 }
