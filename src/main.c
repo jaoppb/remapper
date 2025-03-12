@@ -18,7 +18,7 @@ MODULE_PARM_DESC(device_name, "Name of the device to be remapped");
 
 // Key table param
 static int key_table_count = 0;
-static char *key_table[MAX_REMAPS];
+static char key_table[MAX_REMAPS];
 
 module_param_array(key_table, charp, &key_table_count, 0);
 MODULE_PARM_DESC(key_table, "Table of key mappings");
