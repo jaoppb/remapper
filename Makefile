@@ -11,8 +11,7 @@ all: $(OUTPUT_DIR)/ $(subst $(SOURCE_DIR),$(OUTPUT_DIR),$(SOURCES)) $(OUTPUT_DIR
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(ROOT_DIR)/$(OUTPUT_DIR) modules
 
 install: all
-	cd $(ROOT_DIR)/$(OUTPUT_DIR) && \
-	sudo insmod $(TARGET).ko device_name="AT Translated Set 2 keyboard" key_table="0x25;0"
+	sudo $(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(ROOT_DIR)/$(OUTPUT_DIR) modules_install
 
 remove:
 	sudo rmmod $(TARGET)
