@@ -35,7 +35,6 @@ struct key_remap {
 
 // Globals
 
-static int connected_devices = 0;
 static struct key_remap key_table_parsed[MAX_REMAPS] = {
     0,
 };
@@ -126,6 +125,11 @@ static bool filter_device(struct input_handler *handler, struct input_dev *dev) 
 }
 
 static int connect_device(struct input_handler *handler, struct input_dev *dev, const struct input_device_id *id) {
+    if (device != NULL) {
+        pr_err("Only one device can be remapped at a time\n");
+        return -1;
+    }
+
     for (int i = 0; i < key_table_count; i++) {
         if (remap_device_key(dev, &key_table_parsed[i]) < 0) {
             pr_err("Failed to remap device key\n");
@@ -136,7 +140,6 @@ static int connect_device(struct input_handler *handler, struct input_dev *dev, 
     pr_info("Device %s connected\n", dev->name);
 
     device = dev;
-    connected_devices++;
     return 0;
 }
 
@@ -172,16 +175,6 @@ static int __init remap_init(void) {
 
     if (input_register_handler(&input_handler) < 0) {
         pr_err("Failed to register input handler\n");
-        return -1;
-    }
-
-    if (connected_devices == 0) {
-        pr_err("No devices connected\n");
-        return -1;
-    }
-
-    if (connected_devices > 1) {
-        pr_err("This module can only remap one device\n");
         return -1;
     }
 
