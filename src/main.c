@@ -3,10 +3,6 @@
 #include <linux/module.h>
 #include <linux/printk.h>
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("jaoppb");
-MODULE_DESCRIPTION("A simple input remapper, that acts on scan code");
-
 #define MAX_NAME_LENGTH 1024
 #define MAX_REMAPS 100
 
@@ -202,3 +198,8 @@ static void __exit remap_exit(void) {
 
 module_init(remap_init);
 module_exit(remap_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("jaoppb");
+MODULE_DESCRIPTION("A simple input remapper, that acts on scan code");
+MODULE_VERSION("1");
