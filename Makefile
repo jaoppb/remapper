@@ -7,9 +7,10 @@ TARGET = remapper
 KERNEL_DIR = /lib/modules/$(shell uname -r)/build
 
 SOURCES = $(SOURCE_DIR)/main.c
+HEADERS = $(SOURCE_DIR)/utils.h
 
 # Depends on bin/include bin/*.c and bin/Kbuild
-all: $(OUTPUT_DIR)/ $(subst $(SOURCE_DIR),$(OUTPUT_DIR),$(SOURCES)) $(OUTPUT_DIR)/Kbuild
+all: $(OUTPUT_DIR)/ $(subst $(SOURCE_DIR),$(OUTPUT_DIR),$(SOURCES)) $(subst $(SOURCE_DIR),$(OUTPUT_DIR),$(HEADERS)) $(OUTPUT_DIR)/Kbuild
 	$(MAKE) -C $(KERNEL_DIR) M=$(ROOT_DIR)/$(OUTPUT_DIR) modules
 
 install: all

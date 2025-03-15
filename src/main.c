@@ -3,6 +3,8 @@
 #include <linux/module.h>
 #include <linux/printk.h>
 
+#include "utils.h"
+
 #define MAX_NAME_LENGTH 1024
 #define MAX_REMAPS 100
 
@@ -21,12 +23,21 @@ MODULE_PARM_DESC(key_table, "Table of key mappings");
 
 // Key remap
 
+struct key_remap_from {
+    __u32 key_code;
+    __u8 *scan_codes;
+    size_t scan_codes_size;
+};
+
+struct key_remap_to {
+    __u32 key_code;
+};
+
 struct key_remap {
     bool mapped;
     __u32 old;
-    __u8 *from;
-    size_t from_size;
-    __u32 to;
+    struct key_remap_from from;
+    struct key_remap_to to;
 };
 
 // Globals
@@ -62,15 +73,15 @@ static int parse_remap(struct key_remap *remap, char *from, __u32 to) {
         size++;
     }
 
-    remap->from = kcalloc(size, sizeof(__u8), GFP_KERNEL);
-    if (remap->from == NULL) {
+    remap->from.scan_codes = kcalloc(size, sizeof(__u8), GFP_KERNEL);
+    if (remap->from.scan_codes == NULL) {
         pr_err("Failed to allocate memory for key_remap.from\n");
         return -1;
     }
 
-    memcpy(remap->from, result, size);
-    remap->from_size = size;
-    remap->to = to;
+    memcpy(remap->from.scan_codes, result, size);
+    remap->from.scan_codes_size = size;
+    remap->to.key_code = to;
 
     kfree(result);
 
@@ -98,17 +109,17 @@ static int parse_remaps(struct key_remap *remaps, char **table, int count) {
 
 static int remap_device_key(struct input_dev *dev, struct key_remap *remap) {
     struct input_keymap_entry entry = {
-        .keycode = remap->to,
-        .len = remap->from_size,
+        .keycode = remap->to.key_code,
+        .len = remap->from.scan_codes_size,
     };
-    memcpy(entry.scancode, remap->from, remap->from_size);
+    memcpy(entry.scancode, remap->from.scan_codes, remap->from.scan_codes_size);
 
     if (dev->setkeycode(dev, &entry, &remap->old) < 0) {
         pr_err("Failed to remap key\n");
         return -1;
     }
 
-    pr_info("Key %d remapped to %d\n", remap->old, remap->to);
+    pr_info("Key %d remapped to %d\n", remap->old, remap->to.key_code);
 
     remap->mapped = true;
     return 0;
@@ -131,6 +142,10 @@ static int connect_device(struct input_handler *handler, struct input_dev *dev, 
             pr_err("Failed to remap device key\n");
             return -1;
         }
+    }
+
+    for (int i = 0; i < key_table_count; i++) {
+        key_table_parsed[i].from.key_code = get_key_code(dev, key_table_parsed[i].from.scan_codes, key_table_parsed[i].from.scan_codes_size);
     }
 
     pr_info("Device %s connected\n", dev->name);
@@ -184,10 +199,10 @@ static void __exit remap_exit(void) {
         for (int i = 0; i < key_table_count; i++) {
             if (!key_table_parsed[i].mapped) continue;
 
-            __u8 aux = key_table_parsed[i].to;
-            key_table_parsed[i].to = key_table_parsed[i].old;
+            __u8 aux = key_table_parsed[i].to.key_code;
+            key_table_parsed[i].to.key_code = key_table_parsed[i].old;
             remap_device_key(device, &key_table_parsed[i]);
-            key_table_parsed[i].to = aux;
+            key_table_parsed[i].to.key_code = aux;
             key_table_parsed[i].mapped = false;
         }
     }
