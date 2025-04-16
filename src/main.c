@@ -105,6 +105,20 @@ static int parse_remaps(struct key_remap *remaps, char **table, int count) {
     return 0;
 }
 
+static int free_remaps(struct key_remap *remaps, int count) {
+	for (int i = 0; i < count; i++) {
+		kfree(remaps[i].from.scan_codes);
+		remaps[i].from.scan_codes = NULL;
+		remaps[i].from.scan_codes_size = 0;
+		remaps[i].mapped = false;
+		remaps[i].old = 0;
+		remaps[i].from.key_code = 0;
+		remaps[i].to.key_code = 0;
+	}
+
+	return 0;
+}
+
 // Remap Device methods
 
 static int remap_device_key(struct input_dev *dev, struct key_remap *remap) {
@@ -122,6 +136,20 @@ static int remap_device_key(struct input_dev *dev, struct key_remap *remap) {
     pr_info("Key %d remapped to %d\n", remap->old, remap->to.key_code);
 
     remap->mapped = true;
+    return 0;
+}
+
+static int undo_remap_device_key(struct input_dev* dev, struct key_remap* remap, int remap_count) {
+	for (int i = 0; i < remap_count; i++) {
+		if (!remap[i].mapped) continue;
+
+		__u8 aux = remap[i].to.key_code;
+		remap[i].to.key_code = remap[i].old;
+		remap_device_key(dev, &remap[i]);
+		remap[i].to.key_code = aux;
+		remap[i].mapped = false;
+	}
+
     return 0;
 }
 
@@ -155,6 +183,11 @@ static int connect_device(struct input_handler *handler, struct input_dev *dev, 
 }
 
 static void disconnect_device(struct input_handle *handle) {
+	if (handle->dev == device) {
+		undo_remap_device_key(device, key_table_parsed, key_table_count);
+		device = NULL;
+	}
+
     pr_info("Device %s disconnected\n", handle->dev->name);
 }
 
@@ -196,15 +229,9 @@ static int __init remap_init(void) {
 
 static void __exit remap_exit(void) {
     if(device != NULL)  {
-        for (int i = 0; i < key_table_count; i++) {
-            if (!key_table_parsed[i].mapped) continue;
-
-            __u8 aux = key_table_parsed[i].to.key_code;
-            key_table_parsed[i].to.key_code = key_table_parsed[i].old;
-            remap_device_key(device, &key_table_parsed[i]);
-            key_table_parsed[i].to.key_code = aux;
-            key_table_parsed[i].mapped = false;
-        }
+		undo_remap_device_key(device, key_table_parsed, key_table_count);
+		free_remaps(key_table_parsed, key_table_count);
+		device = NULL;
     }
 
     input_unregister_handler(&input_handler);
