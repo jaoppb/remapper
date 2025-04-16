@@ -183,6 +183,11 @@ static int connect_device(struct input_handler *handler, struct input_dev *dev, 
 }
 
 static void disconnect_device(struct input_handle *handle) {
+	if (handle->dev == device) {
+		undo_remap_device_key(device, key_table_parsed, key_table_count);
+		device = NULL;
+	}
+
     pr_info("Device %s disconnected\n", handle->dev->name);
 }
 
