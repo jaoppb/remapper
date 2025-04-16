@@ -125,6 +125,20 @@ static int remap_device_key(struct input_dev *dev, struct key_remap *remap) {
     return 0;
 }
 
+static int undo_remap_device_key(struct input_dev* dev, struct key_remap* remap, int remap_count) {
+	for (int i = 0; i < remap_count; i++) {
+		if (!remap[i].mapped) continue;
+
+		__u8 aux = remap[i].to.key_code;
+		remap[i].to.key_code = remap[i].old;
+		remap_device_key(dev, &remap[i]);
+		remap[i].to.key_code = aux;
+		remap[i].mapped = false;
+	}
+
+    return 0;
+}
+
 // Input Handler methods
 
 static bool filter_device(struct input_handler *handler, struct input_dev *dev) {
