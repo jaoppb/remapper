@@ -105,6 +105,20 @@ static int parse_remaps(struct key_remap *remaps, char **table, int count) {
     return 0;
 }
 
+static int free_remaps(struct key_remap *remaps, int count) {
+	for (int i = 0; i < count; i++) {
+		kfree(remaps[i].from.scan_codes);
+		remaps[i].from.scan_codes = NULL;
+		remaps[i].from.scan_codes_size = 0;
+		remaps[i].mapped = false;
+		remaps[i].old = 0;
+		remaps[i].from.key_code = 0;
+		remaps[i].to.key_code = 0;
+	}
+
+	return 0;
+}
+
 // Remap Device methods
 
 static int remap_device_key(struct input_dev *dev, struct key_remap *remap) {
