@@ -224,15 +224,9 @@ static int __init remap_init(void) {
 
 static void __exit remap_exit(void) {
     if(device != NULL)  {
-        for (int i = 0; i < key_table_count; i++) {
-            if (!key_table_parsed[i].mapped) continue;
-
-            __u8 aux = key_table_parsed[i].to.key_code;
-            key_table_parsed[i].to.key_code = key_table_parsed[i].old;
-            remap_device_key(device, &key_table_parsed[i]);
-            key_table_parsed[i].to.key_code = aux;
-            key_table_parsed[i].mapped = false;
-        }
+		undo_remap_device_key(device, key_table_parsed, key_table_count);
+		free_remaps(key_table_parsed, key_table_count);
+		device = NULL;
     }
 
     input_unregister_handler(&input_handler);
