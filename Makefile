@@ -14,10 +14,10 @@ all: $(OUTPUT_DIR)/ $(subst $(SOURCE_DIR),$(OUTPUT_DIR),$(SOURCES)) $(subst $(SO
 	$(MAKE) -C $(KERNEL_DIR) M=$(ROOT_DIR)/$(OUTPUT_DIR) modules
 
 install: all
-	sudo $(MAKE) -C $(KERNEL_DIR) M=$(ROOT_DIR)/$(OUTPUT_DIR) modules_install
+	$(MAKE) -C $(KERNEL_DIR) M=$(ROOT_DIR)/$(OUTPUT_DIR) modules_install
 
 remove:
-	sudo rmmod $(TARGET)
+	rmmod $(TARGET)
 
 # Create a symlink from src to bin
 $(OUTPUT_DIR)/%: $(SOURCE_DIR)/%
