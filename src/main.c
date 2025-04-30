@@ -244,4 +244,4 @@ module_exit(remap_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("jaoppb");
 MODULE_DESCRIPTION("A simple input remapper, that acts on scan code");
-MODULE_VERSION("1");
+MODULE_VERSION("0.1.0");
