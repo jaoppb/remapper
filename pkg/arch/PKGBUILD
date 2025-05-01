@@ -2,7 +2,7 @@
 pkgname=remapper-dkms
 _pkgname="${pkgname%-*}"
 pkgver=0.1.0
-pkgrel=2
+pkgrel=3
 pkgdesc='A kernel module to remap keys at scan code level'
 arch=('x86_64')
 url='https://github.com/jaoppb/remapper'
@@ -19,5 +19,5 @@ package() {
 	cp -dr --no-preserve=mode,ownership ./src "$pkgdir/usr/src/$_pkgname-$pkgver/"
 	install -Dm644 dkms.conf "$pkgdir/usr/src/$_pkgname-$pkgver/dkms.conf"
 
-	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$_pkgname/LICENSE"
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
