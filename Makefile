@@ -23,6 +23,9 @@ remove:
 $(DESTDIR)/%: $(SRCDIR)/%
 	cp $(ROOT_DIR)/$< $@
 
+dkms: install
+	cp $(DESTDIR)/*.ko .
+
 # Create any needed folder
 %/:
 	mkdir -p $@
