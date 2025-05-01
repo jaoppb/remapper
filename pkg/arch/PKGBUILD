@@ -2,14 +2,14 @@
 pkgname=remapper-dkms
 _pkgname="${pkgname%-*}"
 pkgver=0.1.0
-pkgrel=1
+pkgrel=2
 pkgdesc='A kernel module to remap keys at scan code level'
 arch=('x86_64')
 url='https://github.com/jaoppb/remapper'
 license=('MIT')
 depends=('dkms')
 source=("$_pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('b7bdce6f7999a4f2ad9b72a16f6476919b8058d72f65b1bba1cb219bdbe57981')
+sha256sums=('57b6bc89ae26fcdb22031d75aa919d6fa9fe7fa0fbe177293f935149dee674d6')
 
 package() {
 	cd "$_pkgname-$pkgver"
