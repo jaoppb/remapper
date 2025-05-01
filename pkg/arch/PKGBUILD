@@ -1,0 +1,23 @@
+# Maintainer: João Pedro <joaopedroperes06@gmail.com>
+pkgname=remapper-dkms
+_pkgname="${pkgname%-*}"
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='A kernel module to remap keys at scan code level'
+arch=('x86_64')
+url='https://github.com/jaoppb/remapper'
+license=('MIT')
+depends=('dkms')
+source=("$_pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('b7bdce6f7999a4f2ad9b72a16f6476919b8058d72f65b1bba1cb219bdbe57981')
+
+package() {
+	cd "$_pkgname-$pkgver"
+
+	install -dm 755 "$pkgdir/usr/src/$_pkgname-$pkgver"
+	
+	cp -dr --no-preserve=mode,ownership ./src "$pkgdir/usr/src/$_pkgname-$pkgver/"
+	install -Dm644 dkms.conf "$pkgdir/usr/src/$_pkgname-$pkgver/dkms.conf"
+
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$_pkgname/LICENSE"
+}
