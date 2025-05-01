@@ -16,7 +16,7 @@ package() {
 
 	install -dm 755 "$pkgdir/usr/src/$_pkgname-$pkgver"
 	
-	cp -dr --no-preserve=mode,ownership ./src "$pkgdir/usr/src/$_pkgname-$pkgver/"
+	cp -dr --no-preserve=mode,ownership ./ "$pkgdir/usr/src/$_pkgname-$pkgver/"
 	install -Dm644 dkms.conf "$pkgdir/usr/src/$_pkgname-$pkgver/dkms.conf"
 
 	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
