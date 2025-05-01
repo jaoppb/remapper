@@ -9,7 +9,7 @@ url='https://github.com/jaoppb/remapper'
 license=('MIT')
 depends=('dkms')
 source=("$_pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('759c67817cc318ed372c55993566cf3b69302adc54e468636130056a870b7277')
+sha256sums=('693999643ce1ac611763413f91fffa51d0976322c605e1aba4b5922cb17293e3')
 
 package() {
 	cd "$_pkgname-$pkgver"
