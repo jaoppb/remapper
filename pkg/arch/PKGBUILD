@@ -1,7 +1,7 @@
 # Maintainer: João Pedro <joaopedroperes06@gmail.com>
 pkgname=remapper-dkms
 _pkgname="${pkgname%-*}"
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=3
 pkgdesc='A kernel module to remap keys at scan code level'
 arch=('x86_64')
