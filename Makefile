@@ -4,7 +4,7 @@ SRCDIR = src
 DESTDIR = build
 TARGET = remapper
 
-KERNEL_DIR = /lib/modules/$(shell uname -r)/build
+KERNEL_DIR = /lib/modules/$(KERNEL_UNAME)/build
 
 SOURCES = $(SRCDIR)/main.c
 HEADERS = $(SRCDIR)/utils.h
